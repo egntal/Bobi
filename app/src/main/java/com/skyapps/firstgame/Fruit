@@ -1,0 +1,254 @@
+package com.skyapps.firstgame;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.media.MediaPlayer;
+import android.preference.PreferenceManager;
+import android.util.Log;
+import android.widget.Toast;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.io.ObjectOutputStream;
+
+public class Fruit {
+    float x,y;
+    Bitmap bitmap;
+    BoardGame boardGame;
+    boolean isMarkToRemove;
+    int point;
+    int type;
+    Bitmap bombBitmap;
+    boolean createBomb;
+    Paint paint;
+
+    Context context;
+
+    int points;
+
+    public Fruit(Context context, float x, float y, Bitmap bitmap, BoardGame boardGame, boolean isMarkToRemove, int point, int type, Bitmap bombBitmap, boolean createBomb) {
+        this.context = context;
+        this.x = x;
+        this.y = y;
+        this.bitmap = bitmap;
+        this.boardGame = boardGame;
+        this.isMarkToRemove = isMarkToRemove;
+        this.point = point;
+        this.type = type;
+        this.bombBitmap = bombBitmap;
+        this.createBomb = createBomb;
+
+        paint = new Paint();
+        paint.setAlpha(255);
+
+
+    }
+
+    public float getX() {
+        return x;
+    }
+
+    public void setX(float x) {
+        this.x = x;
+    }
+
+    public float getY() {
+        return y;
+    }
+
+    public void setY(float y) {
+        this.y = y;
+    }
+
+    public Bitmap getBitmap() {
+        return bitmap;
+    }
+
+    public void setBitmap(Bitmap bitmap) {
+        this.bitmap = bitmap;
+    }
+
+    public BoardGame getBoardGame() {
+        return boardGame;
+    }
+
+    public void setBoardGame(BoardGame boardGame) {
+        this.boardGame = boardGame;
+    }
+
+    public boolean isMarkToRemove() {
+        return isMarkToRemove;
+    }
+
+    public void setMarkToRemove(boolean markToRemove) {
+        isMarkToRemove = markToRemove;
+    }
+
+    public int getPoint() {
+        return point;
+    }
+
+    public void setPoint(int point) {
+        this.point = point;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
+    }
+
+    public Bitmap getBombBitmap() {
+        return bombBitmap;
+    }
+
+    public void setBombBitmap(Bitmap bombBitmap) {
+        this.bombBitmap = bombBitmap;
+    }
+
+    public boolean isCreateBomb() {
+        return createBomb;
+    }
+
+    public int getPoints() {
+        return points;
+    }
+
+    public void setPoints(int points) {
+        this.points = points;
+    }
+
+    public void setCreateBomb(boolean createBomb) {
+        this.createBomb = createBomb;
+    }
+
+    public Paint getPaint() {
+        return paint;
+    }
+
+    public void setPaint(Paint paint) {
+        this.paint = paint;
+    }
+
+    public synchronized void drawBitmap(Canvas canvas){
+        canvas.drawBitmap(bitmap, x , y, paint);
+    }
+
+
+
+    public void moveFruit(int index, int start){
+        this.x=this.x-index-100;
+
+        if (this.x<0){
+            this.x = boardGame.getWidth()+start;
+            paint.setAlpha(255);
+        }
+
+
+
+    }
+
+    public void fireNow(Canvas canvas){
+
+
+        if (createBomb){
+            canvas.drawBitmap(bombBitmap,x,y-50,null);
+
+        }
+
+        createBomb = false;
+        drawPoint(canvas);
+    }
+
+    public void drawPoint(Canvas canvas){
+        Paint p = new Paint();
+        p.setTextSize(50);
+
+        if (point <0){
+            p.setColor(Color.RED);
+        }
+
+        else
+            p.setColor(Color.YELLOW);
+
+        p.setFakeBoldText(true);
+
+        if (point >0){
+            int thepoint = (Integer.parseInt(String.valueOf(this.point)));
+            canvas.drawText(" P O I N T S !", x , y , p);
+
+            points = thepoint + points;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+
+                    MediaPlayer player = MediaPlayer.create(context,R.raw.fire);
+                    player.setLooping(false);
+                    player.setVolume(100,100);
+                    player.start();
+                    SharedPreferences sp = context.getSharedPreferences("TAL", Context.MODE_APPEND);
+                    sp.edit().putInt("points", sp.getInt("points",0) + points).commit();
+                    Log.e("points: " , sp.getInt("points",0) + "  // " + points);
+
+                    if ( sp.getInt("points",0) < 0)
+                        sp.edit().putInt("points", 0).commit();
+
+                }
+            }).start();
+
+        }
+        else{
+            int thepoint = (Integer.parseInt(String.valueOf(this.point)));
+            canvas.drawText(" B O O O O M ! ",x,y,p);
+
+            points = thepoint + points;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+
+                    MediaPlayer player = MediaPlayer.create(context,R.raw.fire);
+                    player.setLooping(false);
+                    player.setVolume(100,100);
+                    player.start();
+                    SharedPreferences sp = context.getSharedPreferences("TAL", Context.MODE_APPEND);
+                    sp.edit().putInt("points", sp.getInt("points",0) + points).commit();
+                    Log.e("points: " , sp.getInt("points",0) + "  // " + points);
+
+                    if ( sp.getInt("points",0) < 0)
+                        sp.edit().putInt("points", 0).commit();
+
+                }
+            }).start();
+
+        }
+
+
+        Paint paint = new Paint();
+        paint.setTextSize(25);
+        paint.setColor(Color.BLACK);
+        paint.isFakeBoldText();
+
+
+
+
+
+
+
+        //if (fruits[i].getPoint() > 0)
+         //canvas.drawText("Your Point : " + points +"!", this.getWidth() / 2, this.getHeight() * 10 / 100, paint);
+
+
+
+    }
+
+}
